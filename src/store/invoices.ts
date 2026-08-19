@@ -1,21 +1,12 @@
 import { create } from "zustand";
 import type { Invoice } from "@/types/invoice";
-import { fetchInvoices, fetchInvoiceById, createInvoice as apiCreateInvoice, updateInvoiceStatus } from "@/lib/api";
-
-export type CreateInvoicePayload = {
-  senderAddress: string;
-  senderName?: string;
-  senderEmail?: string;
-  recipientAddress: string;
-  recipientName: string;
-  recipientEmail?: string;
-  currency: "USDC" | "XLM";
-  dueDate: string;
-  notes?: string;
-  totalAmount: string;
-  items: Array<{ description: string; quantity: number; unitPrice: string; total: string }>;
-  milestones?: Array<{ title: string; description?: string; amount: string; dueDate: string }>;
-};
+import {
+  fetchInvoices,
+  fetchInvoiceById,
+  createInvoice as apiCreateInvoice,
+  updateInvoiceStatus,
+  type CreateInvoicePayload,
+} from "@/lib/api";
 
 interface InvoiceStore {
   invoices: Invoice[];
@@ -56,10 +47,10 @@ export const useInvoiceStore = create<InvoiceStore>((set) => ({
     }
   },
 
-  addInvoice: async (payload) => {
+  addInvoice: async (payload: CreateInvoicePayload) => {
     set({ loading: true, error: null });
     try {
-      const invoice = await apiCreateInvoice(payload as Parameters<typeof apiCreateInvoice>[0]);
+      const invoice = await apiCreateInvoice(payload);
       set((s) => ({ invoices: [invoice, ...s.invoices], loading: false }));
       return invoice;
     } catch (err: unknown) {
