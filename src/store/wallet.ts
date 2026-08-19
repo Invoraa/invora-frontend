@@ -14,22 +14,24 @@ export interface WalletState {
 }
 
 async function getFreighterPublicKey(): Promise<string> {
-  // Dynamically import to avoid SSR issues
+  if (typeof window === "undefined") throw new Error("Not in browser");
+  // dynamic import avoids SSR breakage
   const freighter = await import("@stellar/freighter-api");
-  const connected = await freighter.isConnected();
-  if (!connected) throw new Error("Freighter extension not found. Please install it.");
-  const allowed = await freighter.isAllowed();
-  if (!allowed) {
+  const { isConnected } = await freighter.isConnected();
+  if (!isConnected) throw new Error("Freighter extension not found. Please install it.");
+  const { isAllowed } = await freighter.isAllowed();
+  if (!isAllowed) {
     await freighter.setAllowed();
   }
-  const result = await freighter.getPublicKey();
-  if (!result) throw new Error("Could not retrieve public key from Freighter.");
-  return result;
+  const { publicKey, error } = await freighter.getPublicKey();
+  if (error) throw new Error(error);
+  if (!publicKey) throw new Error("Could not retrieve public key from Freighter.");
+  return publicKey;
 }
 
 export const useWalletStore = create<WalletState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       publicKey: null,
       walletType: null,
       isConnecting: false,
@@ -38,16 +40,13 @@ export const useWalletStore = create<WalletState>()(
       connect: async (walletType: WalletType) => {
         if (!walletType) return;
         set({ isConnecting: true, error: null });
-
         try {
           let publicKey: string;
-
           if (walletType === "freighter") {
             publicKey = await getFreighterPublicKey();
           } else {
             throw new Error(`${walletType} wallet support coming soon.`);
           }
-
           set({ publicKey, walletType, isConnecting: false });
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : "Failed to connect wallet";
@@ -55,15 +54,12 @@ export const useWalletStore = create<WalletState>()(
         }
       },
 
-      disconnect: () => {
-        set({ publicKey: null, walletType: null, error: null });
-      },
-
+      disconnect: () => set({ publicKey: null, walletType: null, error: null }),
       clearError: () => set({ error: null }),
     }),
     {
       name: "invora-wallet",
-      partialState: (state: WalletState) => ({
+      partialize: (state) => ({
         publicKey: state.publicKey,
         walletType: state.walletType,
       }),
