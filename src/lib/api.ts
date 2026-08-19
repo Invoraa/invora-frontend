@@ -12,19 +12,42 @@ export const apiClient = axios.create({
 // ── Invoices ────────────────────────────────────────────────────
 
 export async function fetchInvoices(address: string): Promise<Invoice[]> {
-  const { data } = await apiClient.get(`/api/invoices?address=${address}`);
+  const { data } = await apiClient.get<{ invoices: Invoice[] }>(`/api/invoices?address=${address}`);
   return data.invoices ?? [];
 }
 
 export async function fetchInvoiceById(id: string): Promise<Invoice> {
-  const { data } = await apiClient.get(`/api/invoices/${id}`);
+  const { data } = await apiClient.get<{ invoice: Invoice }>(`/api/invoices/${id}`);
   return data.invoice;
 }
 
-export async function createInvoice(
-  payload: Omit<Invoice, "id" | "invoiceNumber" | "createdAt" | "status">
-): Promise<Invoice> {
-  const { data } = await apiClient.post("/api/invoices", payload);
+export interface CreateInvoicePayload {
+  senderAddress: string;
+  senderName?: string;
+  senderEmail?: string;
+  recipientAddress: string;
+  recipientName: string;
+  recipientEmail?: string;
+  currency: "USDC" | "XLM";
+  dueDate: string;
+  notes?: string;
+  totalAmount: string;
+  items: Array<{
+    description: string;
+    quantity: number;
+    unitPrice: string;
+    total: string;
+  }>;
+  milestones?: Array<{
+    title: string;
+    description?: string;
+    amount: string;
+    dueDate: string;
+  }>;
+}
+
+export async function createInvoice(payload: CreateInvoicePayload): Promise<Invoice> {
+  const { data } = await apiClient.post<{ invoice: Invoice }>("/api/invoices", payload);
   return data.invoice;
 }
 
@@ -34,7 +57,7 @@ export async function updateInvoiceStatus(
   txHash?: string,
   contractAddress?: string
 ): Promise<Invoice> {
-  const { data } = await apiClient.patch(`/api/invoices/${id}`, {
+  const { data } = await apiClient.patch<{ invoice: Invoice }>(`/api/invoices/${id}`, {
     status,
     txHash,
     contractAddress,
