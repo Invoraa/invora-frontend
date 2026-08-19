@@ -13,19 +13,34 @@ export interface WalletState {
   clearError: () => void;
 }
 
-async function getFreighterPublicKey(): Promise<string> {
-  if (typeof window === "undefined") throw new Error("Not in browser");
-  // dynamic import avoids SSR breakage
-  const freighter = await import("@stellar/freighter-api");
-  const { isConnected } = await freighter.isConnected();
-  if (!isConnected) throw new Error("Freighter extension not found. Please install it.");
-  const { isAllowed } = await freighter.isAllowed();
-  if (!isAllowed) {
-    await freighter.setAllowed();
+async function connectFreighter(): Promise<string> {
+  if (typeof window === "undefined") {
+    throw new Error("Not in browser environment");
   }
-  const { publicKey, error } = await freighter.getPublicKey();
-  if (error) throw new Error(error);
-  if (!publicKey) throw new Error("Could not retrieve public key from Freighter.");
+
+  // Dynamically import to prevent SSR errors
+  const {
+    isConnected,
+    isAllowed,
+    setAllowed,
+    getPublicKey,
+  } = await import("@stellar/freighter-api");
+
+  const connected = await isConnected();
+  if (!connected) {
+    throw new Error("Freighter not found. Please install the Freighter extension.");
+  }
+
+  const allowed = await isAllowed();
+  if (!allowed) {
+    await setAllowed();
+  }
+
+  const publicKey = await getPublicKey();
+  if (!publicKey) {
+    throw new Error("Could not get public key from Freighter.");
+  }
+
   return publicKey;
 }
 
@@ -40,16 +55,20 @@ export const useWalletStore = create<WalletState>()(
       connect: async (walletType: WalletType) => {
         if (!walletType) return;
         set({ isConnecting: true, error: null });
+
         try {
           let publicKey: string;
+
           if (walletType === "freighter") {
-            publicKey = await getFreighterPublicKey();
+            publicKey = await connectFreighter();
           } else {
             throw new Error(`${walletType} wallet support coming soon.`);
           }
+
           set({ publicKey, walletType, isConnecting: false });
         } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : "Failed to connect wallet";
+          const message =
+            err instanceof Error ? err.message : "Failed to connect wallet";
           set({ error: message, isConnecting: false, publicKey: null, walletType: null });
         }
       },
