@@ -1,12 +1,36 @@
-export type InvoiceStatus = "draft" | "pending" | "in_escrow" | "released" | "disputed" | "cancelled";
+export type InvoiceStatus =
+  | "draft"
+  | "pending"
+  | "in_escrow"
+  | "partially_paid"
+  | "paid"
+  | "disputed"
+  | "cancelled";
+
+export type MilestoneStatus = "pending" | "completed" | "released";
 
 export interface Milestone {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   amount: string;
   dueDate: string;
-  status: "pending" | "completed" | "released";
+  status: MilestoneStatus;
+  txHash?: string;
+}
+
+export interface InvoiceItem {
+  id?: string;
+  description: string;
+  quantity: number;
+  unitPrice: string;
+  total: string;
+}
+
+export interface InvoiceParty {
+  name?: string;
+  stellarAddress: string;
+  email?: string;
 }
 
 export interface Invoice {
@@ -15,22 +39,17 @@ export interface Invoice {
   createdAt: string;
   dueDate: string;
   status: InvoiceStatus;
-  sender: {
-    name: string;
-    stellarAddress: string;
-    email?: string;
-  };
-  recipient: {
-    name: string;
-    stellarAddress: string;
-    email?: string;
-  };
-  items: Array<{
-    description: string;
-    quantity: number;
-    unitPrice: string;
-    total: string;
-  }>;
+  // Flattened fields from DB
+  senderAddress?: string;
+  senderName?: string;
+  senderEmail?: string;
+  recipientAddress?: string;
+  recipientName?: string;
+  recipientEmail?: string;
+  // Nested party objects (for display)
+  sender?: InvoiceParty;
+  recipient?: InvoiceParty;
+  items?: InvoiceItem[];
   currency: "USDC" | "XLM";
   totalAmount: string;
   milestones?: Milestone[];
