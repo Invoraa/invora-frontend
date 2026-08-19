@@ -13,10 +13,9 @@
   },
   "dependencies": {
     "next": "14.2.5",
-    "react": "^18",
-    "react-dom": "^18",
-    "@stellar/stellar-sdk": "^12.0.0",
-    "@creit.tech/stellar-wallets-kit": "^0.9.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@stellar/stellar-sdk": "^12.3.0",
     "axios": "^1.7.2",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.4.0",
@@ -25,8 +24,7 @@
     "react-hook-form": "^7.52.1",
     "zod": "^3.23.8",
     "@hookform/resolvers": "^3.9.0",
-    "date-fns": "^3.6.0",
-    "nanoid": "^3.3.7"
+    "date-fns": "^3.6.0"
   },
   "devDependencies": {
     "typescript": "^5",
