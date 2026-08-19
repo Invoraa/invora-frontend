@@ -1,6 +1,21 @@
 import { create } from "zustand";
 import type { Invoice } from "@/types/invoice";
-import { fetchInvoices, fetchInvoiceById, createInvoice, updateInvoiceStatus } from "@/lib/api";
+import { fetchInvoices, fetchInvoiceById, createInvoice as apiCreateInvoice, updateInvoiceStatus } from "@/lib/api";
+
+export type CreateInvoicePayload = {
+  senderAddress: string;
+  senderName?: string;
+  senderEmail?: string;
+  recipientAddress: string;
+  recipientName: string;
+  recipientEmail?: string;
+  currency: "USDC" | "XLM";
+  dueDate: string;
+  notes?: string;
+  totalAmount: string;
+  items: Array<{ description: string; quantity: number; unitPrice: string; total: string }>;
+  milestones?: Array<{ title: string; description?: string; amount: string; dueDate: string }>;
+};
 
 interface InvoiceStore {
   invoices: Invoice[];
@@ -9,7 +24,7 @@ interface InvoiceStore {
   error: string | null;
   loadInvoices: (address: string) => Promise<void>;
   loadInvoice: (id: string) => Promise<void>;
-  addInvoice: (payload: Omit<Invoice, "id" | "invoiceNumber" | "createdAt" | "status">) => Promise<Invoice>;
+  addInvoice: (payload: CreateInvoicePayload) => Promise<Invoice>;
   patchStatus: (id: string, status: string, txHash?: string, contractAddress?: string) => Promise<void>;
   clearCurrent: () => void;
   clearError: () => void;
@@ -44,7 +59,7 @@ export const useInvoiceStore = create<InvoiceStore>((set) => ({
   addInvoice: async (payload) => {
     set({ loading: true, error: null });
     try {
-      const invoice = await createInvoice(payload);
+      const invoice = await apiCreateInvoice(payload as Parameters<typeof apiCreateInvoice>[0]);
       set((s) => ({ invoices: [invoice, ...s.invoices], loading: false }));
       return invoice;
     } catch (err: unknown) {
