@@ -1,6 +1,7 @@
 import { Horizon } from "@stellar/stellar-sdk";
 
-export const STELLAR_NETWORK = process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "testnet";
+export const STELLAR_NETWORK =
+  (process.env.NEXT_PUBLIC_STELLAR_NETWORK as "testnet" | "mainnet") ?? "testnet";
 
 export const horizonUrl =
   STELLAR_NETWORK === "mainnet"
@@ -10,7 +11,8 @@ export const horizonUrl =
 export const server = new Horizon.Server(horizonUrl);
 
 export const USDC_ASSET_CODE = "USDC";
-export const USDC_ISSUER_TESTNET = "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5";
+export const USDC_ISSUER_TESTNET =
+  "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5";
 
 export async function getAccountBalances(publicKey: string) {
   const account = await server.loadAccount(publicKey);
@@ -22,4 +24,8 @@ export function formatStellarAmount(amount: string): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 7,
   });
+}
+
+export function generateInvoiceId(): string {
+  return `INV-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 }
